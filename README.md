@@ -1,19 +1,88 @@
-# Exemplos de APIs com banco de dados 
+# API Pessoa & Endereço
 
-* **01_app_without_design_patterns**: exemplo de código que salva um item no banco de dados sem padrão. 
-* **02_app_without_dto**: exemplo de código que salva um item no banco de dados, que utiliza o padrão DTO.
-* **03_app_mvc**: exemplo de código que salva um item no banco de dados, usando o padrão MVC.
-* **04_app_mvc_relation**: exemplo de código que salva um item com relacionamento no banco de dados, usando o padrão MVC.
+Projeto de exemplo em FastAPI + SQLModel para gerenciar Pessoas e Endereços usando um padrão MVC leve (Controllers → Services → Repositories). O código disponibiliza rotas CRUD para `pessoas` e `enderecos` e foi desenhado para ser simples de aprender e estender.
 
-## Explicando o código 03_APP_MVC
+## Estrutura principal
 
-API de exemplo para gerenciar **Heróis** usando **FastAPI**, **SQLModel** (SQLAlchemy + Pydantic), e o padrão **MVC com Repository**:
+- `APP_PessoaEdereco/main.py` — ponto de entrada da aplicação
+- `APP_PessoaEdereco/util/database.py` — criação do engine e sessão (SQLite por padrão)
+- `APP_PessoaEdereco/model/models.py` — modelos SQLModel (Pessoa, Endereco)
+- `APP_PessoaEdereco/model/dto.py` — schemas/DTOs (create/read/update/public)
+- `APP_PessoaEdereco/controller/Pessoa.py` — rotas/Controller para pessoas (`/pessoas`)
+- `APP_PessoaEdereco/controller/Endereco.py` — rotas/Controller para endereços (`/enderecos`)
 
-* **Controller (Router)** → recebe HTTP
-* **Service** → regras de negócio
-* **Repository** → acesso ao banco
-* **Model (SQLModel)** → entidades e DTOs
-* **Database** → criação do engine e sessão
+O projeto traz um `requirements.txt` com as versões usadas. Principais pacotes:
+
+- fastapi
+- uvicorn
+- sqlmodel (SQLAlchemy + Pydantic)
+
+## Como clonar o repositório
+
+No PowerShell (Windows):
+
+```powershell
+git clone https://github.com/LucasMarianiG/APP_Cadastro_Pessoa_Endereco.git 
+cd meu-projeto-pessoa-endereco
+
+
+---
+
+## 🔌 Endpoints (principais)
+
+Pessoas — Base path: `/pessoas`
+
+| Método | Rota            | Body           | Resposta         | Descrição                          |
+| ------ | --------------- | -------------- | ---------------- | ---------------------------------- |
+| POST   | `/pessoas/`     | `PessoaCreate` | `PessoaRead`     | Cria uma pessoa                    |
+| GET    | `/pessoas/`     | —              | `List[PessoaRead]` | Lista pessoas (offset/limit)     |
+| GET    | `/pessoas/{id}` | —              | `PessoaRead`     | Busca pessoa por ID                |
+| PATCH  | `/pessoas/{id}` | `PessoaUpdate` | `PessoaRead`     | Atualiza campos parciais           |
+| DELETE | `/pessoas/{id}` | —              | `204 No Content` | Remove pessoa                      |
+
+Endereços — Base path: `/enderecos`
+
+| Método | Rota              | Body            | Resposta         | Descrição                          |
+| ------ | ----------------- | --------------- | ---------------- | ---------------------------------- |
+| POST   | `/enderecos/`     | `EnderecoCreate`| `EnderecoRead`   | Cria um endereço (assoc. a pessoa) |
+| GET    | `/enderecos/`     | —               | `List[EnderecoRead]` | Lista endereços                |
+| GET    | `/enderecos/{id}` | —               | `EnderecoRead`   | Busca endereço por ID              |
+| PATCH  | `/enderecos/{id}` | `EnderecoUpdate`| `EnderecoRead`   | Atualiza campos parciais           |
+| DELETE | `/enderecos/{id}` | —               | `204 No Content` | Remove endereço                    |
+
+---
+
+
+## 🧠 Como as camadas se conectam
+
+```
+HTTP (FastAPI)
+   ↓
+Controller (APP_PessoaEdereco/controller)
+   ↓
+Service (APP_PessoaEdereco/service)
+   ↓
+Repository (APP_PessoaEdereco/repository)
+   ↓
+DB Session (APP_PessoaEdereco/util/database.py) + SQLModel (APP_PessoaEdereco/model/models.py)
+```
+
+* **Controller**: lida com requisições/respostas e validações de query/path; injeta dependências com `Depends`.
+* **Service**: regras de negócio (ex.: validações e regras antes de persistir).
+* **Repository**: acesso ao banco via SQLModel/SQLAlchemy (CRUD genérico).
+* **Database**: engine, sessão e criação de schema.
+
+## Reference:
+[Documento Fast API](https://fastapi.tiangolo.com/) : Documentação do FAST API. 
+```
+
+## Contribuições
+
+Abra issues e pull requests. Para novidades, descreva o problema e passos para reproduzir.
+
+---
+
+Se quiser, adapto este README para incluir comandos Git, CI simples ou instruções para deploy em Docker/Heroku/Azure/GCP. Basta pedir.
 
 ---
 
@@ -30,18 +99,21 @@ API de exemplo para gerenciar **Heróis** usando **FastAPI**, **SQLModel** (SQLA
 ## 📂 Estrutura do projeto
 
 ```
-
-├─ app/
-│  ├─ main.py                  # inicialização da app e rotas
-│  ├─ database.py              # engine, sessão e inicialização do schema
-│  ├─ models.py                # SQLModel: entidades e schemas (Create/Update/Public)
-│  ├─ controllers/
-│  │  └─ heroes.py             # Controller (Router) da feature "heroes"
-│  ├─ services/
-│  │  └─ hero_service.py       # Regras de negócio
-│  └─ repositories/
-│     └─ hero_repository.py    # Acesso ao banco (CRUD)
-└─ requirements.txt
+APP_PessoaEdereco/
+├─ controller/
+│  ├─ Endereco.py
+│  ├─ generic.py
+│  └─ Pessoa.py
+├─ model/
+│  ├─ dto.py
+│  └─ models.py
+├─ repository/
+│  └─ base.py
+├─ service/
+│  └─ base.py
+├─ util/
+│  └─ database.py
+└─ main.py
 ```
 
 ---
@@ -65,7 +137,7 @@ SQLModel==0.0.22
 
 ---
 
-## ⚙️ Configuração & Execução
+## ⚙️ ------------Configuração & Execução----------
 
 1. Crie o ambiente e instale dependências:
 
@@ -97,86 +169,6 @@ uvicorn app.main:app --reload
 * ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ---
-
-## 🧱 Modelos (resumo)
-
-* `Hero` (tabela): `id`, `name`, `secret_name?`, `age?`
-* `HeroCreate` (entrada POST)
-* `HeroUpdate` (entrada PATCH, campos opcionais)
-* `HeroPublic` (saída nas respostas)
-
----
-
-## 🔌 Endpoints (Heroes)
-
-Base path: `/heroes`
-
-| Método | Rota         | Body         | Resposta           | Descrição                   |
-| ------ | ------------ | ------------ | ------------------ | --------------------------- |
-| POST   | `/`          | `HeroCreate` | `HeroPublic`       | Cria um herói               |
-| GET    | `/`          | —            | `List[HeroPublic]` | Lista heróis (offset/limit) |
-| GET    | `/{hero_id}` | —            | `HeroPublic`       | Busca por ID                |
-| PATCH  | `/{hero_id}` | `HeroUpdate` | `HeroPublic`       | Atualiza campos parciais    |
-| DELETE | `/{hero_id}` | —            | `204 No Content`   | Remove herói                |
-
----
-
-## 🧪 Exemplos (cURL)
-
-Criar:
-
-```bash
-curl -X POST http://127.0.0.1:8000/heroes/ \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Ada","secret_name":"The Enchantress","age":28}'
-```
-
-Listar:
-
-```bash
-curl "http://127.0.0.1:8000/heroes/?offset=0&limit=100"
-```
-
-Buscar por ID:
-
-```bash
-curl http://127.0.0.1:8000/heroes/1
-```
-
-Atualizar (parcial):
-
-```bash
-curl -X PATCH http://127.0.0.1:8000/heroes/1 \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Ada Lovelace"}'
-```
-
-Remover:
-
-```bash
-curl -X DELETE http://127.0.0.1:8000/heroes/1 -i
-```
-
----
-
-## 🧠 Como as camadas se conectam
-
-```
-HTTP (FastAPI)
-   ↓
-Controller (app/controllers/heroes.py)
-   ↓
-Service (app/services/hero_service.py)
-   ↓
-Repository (app/repositories/hero_repository.py)
-   ↓
-DB Session (app/database.py) + SQLModel (app/models.py)
-```
-
-* **Controller**: lida com requisições/respostas e validações de query/path; injeta dependências com `Depends`.
-* **Service**: regras de negócio (ex.: checar nome duplicado).
-* **Repository**: SQL puro via SQLModel/SQLAlchemy (CRUD).
-* **Database**: engine, sessão e criação de schema.
 
 ## Reference:
 [Documento Fast API](https://fastapi.tiangolo.com/) : Documentação do FAST API. 
